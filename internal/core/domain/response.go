@@ -12,6 +12,9 @@ type ErrorMessage struct {
 type Map map[string]interface{}
 
 func JSON(w http.ResponseWriter, r *http.Request, statusCode int, data interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset")
+	w.WriteHeader(statusCode)
+
 	if data != nil {
 		j, err := json.Marshal(data)
 		if err != nil {
@@ -20,9 +23,6 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, data interface
 
 		w.Write(j)
 	}
-
-	w.Header().Set("Content-Type", "application/json; charset")
-	w.WriteHeader(statusCode)
 
 	return nil
 }

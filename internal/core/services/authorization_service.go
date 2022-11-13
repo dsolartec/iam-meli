@@ -112,7 +112,7 @@ func (service *AuthorizationService) SignUpHandler(w http.ResponseWriter, r *htt
 
 	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), user.ID))
 
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"accessToken": token, "id": user.ID})
+	domain.JSON(w, r, http.StatusOK, domain.Map{"accessToken": token, "id": user.ID})
 }
 
 func (service *AuthorizationService) Routes() http.Handler {

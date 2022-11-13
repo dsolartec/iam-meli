@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/dsolartec/iam-meli/internal"
@@ -23,6 +24,13 @@ type anyPassword struct{}
 func (a anyPassword) Match(v driver.Value) bool {
 	_, ok := v.(string)
 	return ok && strings.HasPrefix(v.(string), "$2a$10$")
+}
+
+type anyTime struct{}
+
+func (a anyTime) Match(v driver.Value) bool {
+	_, ok := v.(time.Time)
+	return ok
 }
 
 var noResultsError = errors.New("sql: no rows in result set")

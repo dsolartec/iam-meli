@@ -3,39 +3,30 @@ package services
 import (
 	"net/http"
 
-	"github.com/dsolartec/iam-meli/internal/database"
-	"github.com/dsolartec/iam-meli/internal/repositories"
+	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
 	"github.com/go-chi/chi"
 )
 
-func New() http.Handler {
+func New(
+	auth_repository interfaces.AuthorizationRepository,
+	permissions_repository interfaces.PermissionsRepository,
+	users_repository interfaces.UsersRepository,
+) http.Handler {
 	r := chi.NewRouter()
 
-	auth_repository := repositories.AuthorizationRepository{
-		Database: database.New(),
-	}
-
-	permissions_repository := repositories.PermissionsRepository{
-		Database: database.New(),
-	}
-
-	users_repository := repositories.UsersRepository{
-		Database: database.New(),
-	}
-
 	authorization := AuthorizationService{
-		Users: &users_repository,
+		Users: users_repository,
 	}
 
 	permissions := PermissionsService{
-		Auth:        &auth_repository,
-		Permissions: &permissions_repository,
+		Auth:        auth_repository,
+		Permissions: permissions_repository,
 	}
 
 	users := UsersService{
-		Auth:        &auth_repository,
-		Permissions: &permissions_repository,
-		Users:       &users_repository,
+		Auth:        auth_repository,
+		Permissions: permissions_repository,
+		Users:       users_repository,
 	}
 
 	r.Mount("/auth", authorization.Routes())

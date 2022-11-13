@@ -11,11 +11,8 @@ import (
 )
 
 func main() {
-	port := os.Getenv("PORT")
-
-	serv, err := server.New(port)
-	if err != nil {
-		log.Fatal(err)
+	if os.Getenv("JWT_KEY") == "" {
+		log.Fatal("Se debe iniciar la variable `JWT_KEY`.")
 	}
 
 	// Database connection.
@@ -25,6 +22,12 @@ func main() {
 	}
 
 	// Start the server.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
+	}
+
+	serv := server.New(db, port)
 	go serv.Start()
 
 	// Wait for an interrupt.

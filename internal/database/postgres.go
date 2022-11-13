@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"io/ioutil"
+	"log"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -10,6 +11,10 @@ import (
 
 func getConnection() (*sql.DB, error) {
 	uri := os.Getenv("DATABASE_URI")
+	if uri == "" {
+		log.Fatal("Se debe iniciar la variable `DATABASE_URI`.")
+	}
+
 	return sql.Open("postgres", uri)
 }
 

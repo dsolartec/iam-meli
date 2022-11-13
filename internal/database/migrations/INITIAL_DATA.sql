@@ -11,6 +11,11 @@ INSERT INTO users (id, username, password)
   VALUES (1, 'superadmin', '$2a$10$usFqeLL8Z3xLEznqYCYdL.c9V3uO3odB2Ub8AWwOITUjvxE6iUBuW')
   ON CONFLICT(id) DO NOTHING;
 
+SELECT SETVAL(
+  (SELECT pg_get_serial_sequence('users', 'id')),
+  (SELECT MAX(id) FROM users)
+);
+
 CREATE TABLE IF NOT EXISTS permissions (
   id          serial       NOT NULL,
   name        VARCHAR(25)  NOT NULL,
@@ -32,6 +37,11 @@ INSERT INTO permissions (id, name, description, deletable, editable)
     (5, 'delete_permissions', 'Poder eliminar permisos de la aplicación', 0, 0)
   ON CONFLICT(id) DO NOTHING;
 
+SELECT SETVAL(
+  (SELECT pg_get_serial_sequence('permissions', 'id')),
+  (SELECT MAX(id) FROM permissions)
+);
+
 CREATE TABLE IF NOT EXISTS user_permissions (
   id            serial NOT NULL,
   user_id       serial NOT NULL,
@@ -45,3 +55,8 @@ CREATE TABLE IF NOT EXISTS user_permissions (
 INSERT INTO user_permissions (id, user_id, permission_id)
   VALUES (1, 1, 1), (2, 1, 2), (3, 1, 3), (4, 1, 4), (5, 1, 5)
   ON CONFLICT(id) DO NOTHING;
+
+SELECT SETVAL(
+  (SELECT pg_get_serial_sequence('user_permissions', 'id')),
+  (SELECT MAX(id) FROM user_permissions)
+);

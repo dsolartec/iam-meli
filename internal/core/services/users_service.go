@@ -39,7 +39,7 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if currentUserID := ctx.Value("current_user_id").(int); err == nil && currentUserID == int(user.ID) {
-		err = errors.New("No puedes eliminar el usuario con el que estás logeado")
+		err = errors.New("No puedes eliminar el usuario con el que estás autenticado")
 	}
 
 	if err != nil {

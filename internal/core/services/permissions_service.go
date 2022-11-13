@@ -154,15 +154,6 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	var data dto.UpdatePermissionBody
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	defer r.Body.Close()
-
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
@@ -173,6 +164,15 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser editado")
 		return
 	}
+
+	var data dto.UpdatePermissionBody
+
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	defer r.Body.Close()
 
 	if data.Name == "" {
 		data.Name = permission.Name

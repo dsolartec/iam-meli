@@ -71,6 +71,13 @@ func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.
 }
 
 func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := service.Auth.VerifyPermission(ctx, "delete_permission"); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 
 	id, err := strconv.Atoi(idStr)
@@ -78,8 +85,6 @@ func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	ctx := r.Context()
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {

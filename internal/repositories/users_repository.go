@@ -113,7 +113,16 @@ func (repository *UsersRepository) GetByUsername(ctx context.Context, username s
 }
 
 func (repository *UsersRepository) GetAllUserPermissions(ctx context.Context, userID uint) ([]models.UserPermission, error) {
-	query := "SELECT id, user_id, permission_id FROM user_permissions WHERE user_id = $1;"
+	query := `
+		SELECT
+			up.id,
+			up.user_id,
+			up.permission_id,
+			p.name as permission_name
+		FROM user_permissions up
+			INNER JOIN permissions p ON p.id = up.permission_id
+		WHERE user_id = $1;
+	`
 
 	rows, err := repository.Database.Conn.QueryContext(ctx, query, userID)
 	if err != nil {
@@ -126,7 +135,7 @@ func (repository *UsersRepository) GetAllUserPermissions(ctx context.Context, us
 	for rows.Next() {
 		var user_permission models.UserPermission
 
-		err = rows.Scan(&user_permission.ID, &user_permission.UserID, &user_permission.PermissionID)
+		err = rows.Scan(&user_permission.ID, &user_permission.UserID, &user_permission.PermissionID, &user_permission.PermissionName)
 		if err != nil {
 			return nil, err
 		}

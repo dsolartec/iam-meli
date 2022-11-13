@@ -26,7 +26,7 @@ func (repository *PermissionsRepository) Create(ctx context.Context, data *model
 }
 
 func (repository *PermissionsRepository) Delete(ctx context.Context, id uint) error {
-	query := "DELETE FROM permissions WHERE id = $1 AND deletable = 1;"
+	query := "DELETE FROM permissions WHERE id = $1 AND deletable = TRUE;"
 
 	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
 	if err != nil {
@@ -103,7 +103,7 @@ func (repository *PermissionsRepository) GetByName(ctx context.Context, name str
 }
 
 func (repository *PermissionsRepository) Update(ctx context.Context, id uint, data *dto.UpdatePermissionBody) error {
-	query := "UPDATE permissions SET name = $1, description = $2, updated_at = $3 WHERE id = $4 AND editable = !"
+	query := "UPDATE permissions SET name = $1, description = $2, updated_at = $3 WHERE id = $4 AND editable = TRUE;"
 
 	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
 	if err != nil {

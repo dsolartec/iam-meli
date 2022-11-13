@@ -56,6 +56,8 @@ func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.
 	permission := models.Permission{
 		Name:        data.Name,
 		Description: data.Description,
+		Deletable:   true,
+		Editable:    true,
 	}
 
 	if err = service.Permissions.Create(ctx, &permission); err != nil {
@@ -85,7 +87,7 @@ func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if permission.Deletable == 0 {
+	if !permission.Deletable {
 		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser borrado")
 		return
 	}
@@ -162,7 +164,7 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if permission.Editable == 0 {
+	if !permission.Editable {
 		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser editado")
 		return
 	}

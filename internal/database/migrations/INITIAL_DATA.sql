@@ -17,11 +17,11 @@ SELECT SETVAL(
 );
 
 CREATE TABLE IF NOT EXISTS permissions (
-  id          serial       NOT NULL,
+  id          SERIAL       NOT NULL,
   name        VARCHAR(25)  NOT NULL,
   description VARCHAR(150) NOT NULL,
-  deletable   SMALLINT     DEFAULT 1,
-  editable    SMALLINT     DEFAULT 1,
+  deletable   BOOLEAN      DEFAULT TRUE,
+  editable    BOOLEAN      DEFAULT TRUE,
   created_at  timestamp    DEFAULT NOW(),
   updated_at  timestamp    DEFAULT NOW(),
 
@@ -30,12 +30,12 @@ CREATE TABLE IF NOT EXISTS permissions (
 
 INSERT INTO permissions (id, name, description, deletable, editable)
   VALUES
-    (1, 'delete_user', 'Poder eliminar usuarios dentro de la aplicación', 0, 0),
-    (2, 'create_permission', 'Poder crear permisos para la aplicación', 0, 0),
-    (3, 'update_permission', 'Poder actualizar un permiso de la aplicación', 0, 0),
-    (4, 'grant_permission', 'Poder añadir un permiso a un usuario', 0, 0),
-    (5, 'revoke_permission', 'Poder eliminar un permiso a un usuario', 0, 0),
-    (6, 'delete_permission', 'Poder eliminar permisos de la aplicación', 0, 0)
+    (1, 'delete_user', 'Poder eliminar usuarios dentro de la aplicación', FALSE, FALSE),
+    (2, 'create_permission', 'Poder crear permisos para la aplicación', FALSE, FALSE),
+    (3, 'update_permission', 'Poder actualizar un permiso de la aplicación', FALSE, FALSE),
+    (4, 'grant_permission', 'Poder añadir un permiso a un usuario', FALSE, FALSE),
+    (5, 'revoke_permission', 'Poder eliminar un permiso a un usuario', FALSE, FALSE),
+    (6, 'delete_permission', 'Poder eliminar permisos de la aplicación', FALSE, FALSE)
   ON CONFLICT(id) DO NOTHING;
 
 SELECT SETVAL(

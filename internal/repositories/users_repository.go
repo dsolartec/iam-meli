@@ -74,10 +74,6 @@ func (repository *UsersRepository) GetByID(ctx context.Context, id uint) (models
 	var user models.User
 
 	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt); err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			err = errors.New("El usuario no existe")
-		}
-
 		return models.User{}, err
 	}
 
@@ -102,10 +98,6 @@ func (repository *UsersRepository) GetByUsername(ctx context.Context, username s
 	}
 
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			err = errors.New("El usuario no existe")
-		}
-
 		return models.User{}, err
 	}
 

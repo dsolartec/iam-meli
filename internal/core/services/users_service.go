@@ -43,7 +43,12 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -65,6 +70,11 @@ func (service *UsersService) GetAllHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	if users == nil || len(users) == 0 {
+		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		return
+	}
+
 	domain.JSON(w, r, http.StatusOK, domain.Map{"users": users})
 }
 
@@ -83,7 +93,12 @@ func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -115,6 +130,11 @@ func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter,
 		return
 	}
 
+	if user_permissions == nil || len(user_permissions) == 0 {
+		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		return
+	}
+
 	domain.JSON(w, r, http.StatusOK, domain.Map{"user_permissions": user_permissions})
 }
 
@@ -143,7 +163,12 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 	}
 
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -198,7 +223,12 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 	}
 
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 

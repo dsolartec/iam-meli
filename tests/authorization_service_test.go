@@ -83,7 +83,7 @@ func TestLogin_UserNotExists(t *testing.T) {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
 
-	expected := "El usuario no existe"
+	expected := "El nombre de usuario o la contraseña es incorrecta"
 	if errorMessage.Message != expected {
 		t.Errorf("Expected %s, got: %s", expected, errorMessage.Message)
 	}

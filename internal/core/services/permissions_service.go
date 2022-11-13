@@ -88,7 +88,12 @@ func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -111,7 +116,12 @@ func (service *PermissionsService) GetAllHandler(w http.ResponseWriter, r *http.
 
 	permissions, err := service.Permissions.GetAll(ctx)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		return
+	}
+
+	if permissions == nil || len(permissions) == 0 {
+		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
 		return
 	}
 
@@ -131,7 +141,12 @@ func (service *PermissionsService) GetByIDHandler(w http.ResponseWriter, r *http
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -156,7 +171,12 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 

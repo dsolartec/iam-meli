@@ -41,12 +41,7 @@ func (service *AuthorizationService) LoginHandler(w http.ResponseWriter, r *http
 	ctx := r.Context()
 
 	user, err := service.Users.GetByUsername(ctx, data.Username, true)
-	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if !user.IsPassword(data.Password) {
+	if err != nil || !user.IsPassword(data.Password) {
 		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre de usuario o la contraseña es incorrecta")
 		return
 	}

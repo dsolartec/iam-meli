@@ -221,6 +221,31 @@ func TestCreatePermission_Success(t *testing.T) {
 	}
 }
 
+func TestDeletePermission_NotFound(t *testing.T) {
+	serv, mock := newTestServer()
+
+	accessToken := generateAccessToken(t, mock, []string{"delete_permission"})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions WHERE id = $1;")).
+		WithArgs(1).
+		WillReturnError(noResultsError)
+
+	res, b := request(t, serv, "/api/permissions/1", "DELETE", nil, accessToken)
+	if res.StatusCode != http.StatusBadRequest {
+		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
+	}
+
+	var errorMessage domain.ErrorMessage
+	if err := json.Unmarshal(b, &errorMessage); err != nil {
+		t.Fatalf("Could not unmarshall response %v", err)
+	}
+
+	expected := "El permiso no existe"
+	if errorMessage.Message != expected {
+		t.Errorf("Expected %s, got: %s", expected, errorMessage.Message)
+	}
+}
+
 func TestDeletePermission_NoDeletable(t *testing.T) {
 	serv, mock := newTestServer()
 
@@ -267,6 +292,20 @@ func TestDeletePermission_Deletable(t *testing.T) {
 	res, _ := request(t, serv, "/api/permissions/1", "DELETE", nil, accessToken)
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
+	}
+}
+
+func TestGetAllPermissions_NoData(t *testing.T) {
+	serv, mock := newTestServer()
+
+	accessToken := generateAccessToken(t, mock, []string{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions;")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "deletable", "editable", "created_at", "updated_at"}))
+
+	res, _ := request(t, serv, "/api/permissions", "GET", nil, accessToken)
+	if res.StatusCode != http.StatusNoContent {
+		t.Errorf("Expected %d, got: %d", http.StatusNoContent, res.StatusCode)
 	}
 }
 
@@ -321,6 +360,21 @@ func TestGetAllPermissions_Success(t *testing.T) {
 
 	if !permission_test_1["editable"].(bool) {
 		t.Errorf("Expected editable true, got: %v", permission_test_1["editable"].(bool))
+	}
+}
+
+func TestGetPermissionByID_NoData(t *testing.T) {
+	serv, mock := newTestServer()
+
+	accessToken := generateAccessToken(t, mock, []string{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions WHERE id = $1;")).
+		WithArgs(1).
+		WillReturnError(noResultsError)
+
+	res, _ := request(t, serv, "/api/permissions/1", "GET", nil, accessToken)
+	if res.StatusCode != http.StatusNoContent {
+		t.Errorf("Expected %d, got: %d", http.StatusNoContent, res.StatusCode)
 	}
 }
 
@@ -461,6 +515,31 @@ func TestUpdatePermission_DuplicatePermissionName(t *testing.T) {
 	}
 
 	expected := "El nombre del permiso ya está en uso"
+	if errorMessage.Message != expected {
+		t.Errorf("Expected %s, got: %s", expected, errorMessage.Message)
+	}
+}
+
+func TestUpdatePermission_NotFound(t *testing.T) {
+	serv, mock := newTestServer()
+
+	accessToken := generateAccessToken(t, mock, []string{"update_permission"})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions WHERE id = $1;")).
+		WithArgs(1).
+		WillReturnError(noResultsError)
+
+	res, b := request(t, serv, "/api/permissions/1", "PUT", nil, accessToken)
+	if res.StatusCode != http.StatusBadRequest {
+		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
+	}
+
+	var errorMessage domain.ErrorMessage
+	if err := json.Unmarshal(b, &errorMessage); err != nil {
+		t.Fatalf("Could not unmarshall response %v", err)
+	}
+
+	expected := "El permiso no existe"
 	if errorMessage.Message != expected {
 		t.Errorf("Expected %s, got: %s", expected, errorMessage.Message)
 	}

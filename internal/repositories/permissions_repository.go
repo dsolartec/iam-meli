@@ -73,10 +73,6 @@ func (repository *PermissionsRepository) GetByID(ctx context.Context, id uint) (
 
 	err := row.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.Editable, &permission.CreatedAt, &permission.UpdatedAt)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			err = errors.New("El permiso no existe")
-		}
-
 		return models.Permission{}, err
 	}
 

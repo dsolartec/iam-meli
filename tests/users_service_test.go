@@ -93,6 +93,50 @@ func TestUsers_NoAuthorized(t *testing.T) {
 	}
 }
 
+func TestDeleteUser_NotFound(t *testing.T) {
+	expected := "El usuario no existe"
+
+	cases := []struct {
+		ID       int
+		username string
+	}{{ID: 1}, {username: "superadmin"}}
+
+	for _, td := range cases {
+		serv, mock := newTestServer()
+
+		accessToken := generateAccessToken(t, mock, []string{"delete_user"})
+
+		var (
+			query *sqlmock.ExpectedQuery
+			find  string
+		)
+
+		if td.username != "" {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE username = $1;")).WithArgs(td.username)
+			find = td.username
+		} else {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE id = $1;")).WithArgs(td.ID)
+			find = fmt.Sprint(td.ID)
+		}
+
+		query.WillReturnError(noResultsError)
+
+		res, b := request(t, serv, "/api/users/"+find, "DELETE", nil, accessToken)
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
+		}
+
+		var errorMessage domain.ErrorMessage
+		if err := json.Unmarshal(b, &errorMessage); err != nil {
+			t.Fatalf("Could not unmarshall response %v", err)
+		}
+
+		if errorMessage.Message != expected {
+			t.Errorf("Expected %s, got: %s", expected, errorMessage.Message)
+		}
+	}
+}
+
 func TestDeleteUser_NoDeletable(t *testing.T) {
 	expected := "No puedes eliminar el usuario con el que estás autenticado"
 
@@ -173,6 +217,20 @@ func TestDeleteUser_Deletable(t *testing.T) {
 	}
 }
 
+func TestGetAllUsers_NoData(t *testing.T) {
+	serv, mock := newTestServer()
+
+	accessToken := generateAccessToken(t, mock, []string{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users;")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at"}))
+
+	res, _ := request(t, serv, "/api/users", "GET", nil, accessToken)
+	if res.StatusCode != http.StatusNoContent {
+		t.Errorf("Expected %d, got: %d", http.StatusNoContent, res.StatusCode)
+	}
+}
+
 func TestGetAllUsers_Success(t *testing.T) {
 	serv, mock := newTestServer()
 
@@ -208,6 +266,39 @@ func TestGetAllUsers_Success(t *testing.T) {
 	meli := users[1].(map[string]interface{})
 	if meli["username"].(string) != "meli" {
 		t.Errorf("Expected meli, got: %s", meli["username"].(string))
+	}
+}
+
+func TestGetOneUser_NoData(t *testing.T) {
+	cases := []struct {
+		ID       int
+		username string
+	}{{ID: 1}, {username: "superadmin"}}
+
+	for _, td := range cases {
+		serv, mock := newTestServer()
+
+		accessToken := generateAccessToken(t, mock, []string{})
+
+		var (
+			query *sqlmock.ExpectedQuery
+			find  string
+		)
+
+		if td.username != "" {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE username = $1;")).WithArgs(td.username)
+			find = td.username
+		} else {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE id = $1;")).WithArgs(td.ID)
+			find = fmt.Sprint(td.ID)
+		}
+
+		query.WillReturnError(noResultsError)
+
+		res, _ := request(t, serv, "/api/users/"+find, "GET", nil, accessToken)
+		if res.StatusCode != http.StatusNoContent {
+			t.Errorf("Expected %d, got: %d", http.StatusNoContent, res.StatusCode)
+		}
 	}
 }
 
@@ -254,6 +345,122 @@ func TestGetOneUser_Success(t *testing.T) {
 
 		if superadmin["username"].(string) != "superadmin" {
 			t.Errorf("Expected superadmin, got: %s", superadmin["username"].(string))
+		}
+	}
+}
+
+func TestGetAllUserPermissions_NoData(t *testing.T) {
+	cases := []struct {
+		ID       int
+		username string
+	}{{ID: 1}, {username: "superadmin"}}
+
+	for _, td := range cases {
+		serv, mock := newTestServer()
+
+		accessToken := generateAccessToken(t, mock, []string{})
+
+		var (
+			query *sqlmock.ExpectedQuery
+			find  string
+		)
+
+		if td.username != "" {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE username = $1;")).WithArgs(td.username)
+			find = td.username
+		} else {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE id = $1;")).WithArgs(td.ID)
+			find = fmt.Sprint(td.ID)
+		}
+
+		query.WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at"}).AddRow(1, "superadmin", time.Now()))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`
+			SELECT
+				up.id,
+				up.user_id,
+				up.permission_id,
+				p.name as permission_name
+			FROM user_permissions up
+				INNER JOIN permissions p ON p.id = up.permission_id
+			WHERE user_id = $1;
+		`)).
+			WithArgs(1).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "permission_id", "permission_name"}))
+
+		res, _ := request(t, serv, "/api/users/"+find+"/permissions", "GET", nil, accessToken)
+		if res.StatusCode != http.StatusNoContent {
+			t.Errorf("Expected %d, got: %d", http.StatusNoContent, res.StatusCode)
+		}
+	}
+}
+
+func TestGetAllUserPermissions_Success(t *testing.T) {
+	cases := []struct {
+		ID       int
+		username string
+	}{{ID: 1}, {username: "superadmin"}}
+
+	for _, td := range cases {
+		serv, mock := newTestServer()
+
+		accessToken := generateAccessToken(t, mock, []string{})
+
+		var (
+			query *sqlmock.ExpectedQuery
+			find  string
+		)
+
+		if td.username != "" {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE username = $1;")).WithArgs(td.username)
+			find = td.username
+		} else {
+			query = mock.ExpectQuery(regexp.QuoteMeta("SELECT id, username, created_at FROM users WHERE id = $1;")).WithArgs(td.ID)
+			find = fmt.Sprint(td.ID)
+		}
+
+		query.WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at"}).AddRow(1, "superadmin", time.Now()))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`
+			SELECT
+				up.id,
+				up.user_id,
+				up.permission_id,
+				p.name as permission_name
+			FROM user_permissions up
+				INNER JOIN permissions p ON p.id = up.permission_id
+			WHERE user_id = $1;
+		`)).
+			WithArgs(1).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "user_id", "permission_id", "permission_name"}).
+					AddRow(1, 1, 1, "permission_test").
+					AddRow(2, 1, 2, "permission_test_1"),
+			)
+
+		res, b := request(t, serv, "/api/users/"+find+"/permissions", "GET", nil, accessToken)
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
+		}
+
+		var data domain.Map
+		if err := json.Unmarshal(b, &data); err != nil {
+			t.Fatalf("Could not unmarshall response %v", err)
+		}
+
+		user_permissions := data["user_permissions"].([]interface{})
+		if len(user_permissions) != 2 {
+			t.Errorf("Expected 2 permissions, got: %d", len(user_permissions))
+		}
+
+		permission_test := user_permissions[0].(map[string]interface{})
+		if permission_test["permission_name"].(string) != "permission_test" {
+			t.Errorf("Expected permission_test, got: %s", permission_test["permission_name"].(string))
+		}
+
+		permission_test_1 := user_permissions[1].(map[string]interface{})
+		if permission_test_1["permission_name"].(string) != "permission_test_1" {
+			t.Errorf("Expected permission_test_1, got: %s", permission_test_1["permission_name"].(string))
 		}
 	}
 }

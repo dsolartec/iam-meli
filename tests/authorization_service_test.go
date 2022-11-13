@@ -314,7 +314,6 @@ func TestSignUp_AccessToken(t *testing.T) {
 	res, b := request(t, serv, "/api/auth/signup", "POST", bytes.NewBuffer(body), "")
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
-		return
 	}
 
 	location := res.Header.Get("Location")
@@ -325,10 +324,6 @@ func TestSignUp_AccessToken(t *testing.T) {
 	var data domain.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
-	}
-
-	if data == nil {
-		t.Errorf("Expected data, got %s", b)
 	}
 
 	accessToken := data["accessToken"].(string)

@@ -13,8 +13,6 @@ services:
       - POSTGRES_PASSWORD=meli2022
     ports:
       - '5432:5432'
-    volumes:
-      - database:/var/lib/postgresql/data
     networks:
       - database-network
   server:
@@ -25,7 +23,7 @@ services:
       - database
     links:
       - database
-    image: iam_meli
+    image: melidsolartec.azurecr.io/iam_meli
     restart: unless-stopped
     environment:
       - DATABASE_URI=postgres://meli:meli2022@database:5432/postgres?sslmode=disable
@@ -35,6 +33,3 @@ services:
       - '80:80'
     networks:
       - database-network
-
-volumes:
-  database:

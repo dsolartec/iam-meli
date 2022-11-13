@@ -11,6 +11,7 @@ import (
 	"github.com/dsolartec/iam-meli/internal/repositories"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 )
 
 type Server struct {
@@ -48,6 +49,7 @@ func New(db *database.Database, port string) *Server {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.AllowAll().Handler)
 
 	r.Get("/", documentationHandler)
 	r.Mount("/api", services.New(&auth_repository, &permissions_repository, &users_repository))

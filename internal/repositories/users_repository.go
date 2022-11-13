@@ -38,7 +38,6 @@ func (repository *UsersRepository) Delete(ctx context.Context, id uint) error {
 	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, id)
-
 	return err
 }
 
@@ -101,4 +100,69 @@ func (repository *UsersRepository) GetByUsername(ctx context.Context, username s
 	}
 
 	return user, nil
+}
+
+func (repository *UsersRepository) GetAllUserPermissions(ctx context.Context, userID uint) ([]models.UserPermission, error) {
+	query := "SELECT id, user_id, permission_id FROM user_permissions WHERE user_id = $1;"
+
+	rows, err := repository.Database.Conn.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var user_permissions []models.UserPermission
+	for rows.Next() {
+		var user_permission models.UserPermission
+
+		err = rows.Scan(&user_permission.ID, &user_permission.UserID, &user_permission.PermissionID)
+		if err != nil {
+			return nil, err
+		}
+
+		user_permissions = append(user_permissions, user_permission)
+	}
+
+	return user_permissions, nil
+}
+
+func (repository *UsersRepository) GetUserPermission(ctx context.Context, userID uint, permissionID uint) (models.UserPermission, error) {
+	query := "SELECT id, user_id, permission_id FROM user_permissions WHERE user_id = $1 AND permission_id = $2;"
+
+	row := repository.Database.Conn.QueryRowContext(ctx, query, userID, permissionID)
+
+	var user_permission models.UserPermission
+
+	if err := row.Scan(&user_permission.ID, &user_permission.UserID, &user_permission.PermissionID); err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			err = errors.New("El usuario no tiene el permiso asignado")
+		}
+
+		return models.UserPermission{}, err
+	}
+
+	return user_permission, nil
+}
+
+func (repository *UsersRepository) GrantPermission(ctx context.Context, data *models.UserPermission) error {
+	query := "INSERT INTO user_permissions (id, user_id, permission_id) VALUES (DEFAULT, $1, $2) RETURNING id;"
+
+	row := repository.Database.Conn.QueryRowContext(ctx, query, data.UserID, data.PermissionID)
+
+	return row.Scan(&data.ID)
+}
+
+func (repository *UsersRepository) RevokePermission(ctx context.Context, id uint) error {
+	query := "DELETE FROM user_permissions WHERE id = $1;"
+
+	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, id)
+	return err
 }

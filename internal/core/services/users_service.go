@@ -14,7 +14,8 @@ import (
 )
 
 type UsersService struct {
-	Repository interfaces.UsersRepository
+	Repository  interfaces.UsersRepository
+	Permissions interfaces.PermissionsRepository
 }
 
 func (service *UsersService) CreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +118,109 @@ func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Reques
 	domain.JSON(w, r, http.StatusOK, domain.Map{"user": user})
 }
 
+func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
+	userIDStr := chi.URLParam(r, "user_id")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := r.Context()
+
+	user_permissions, err := service.Repository.GetAllUserPermissions(ctx, uint(userID))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	domain.JSON(w, r, http.StatusOK, domain.Map{"user_permissions": user_permissions})
+}
+
+func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *http.Request) {
+	userIDStr := chi.URLParam(r, "user_id")
+	permissionName := chi.URLParam(r, "permission_name")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := r.Context()
+
+	_, err = service.Repository.GetByID(ctx, uint(userID))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	permission, err := service.Permissions.GetByName(ctx, permissionName)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	data := models.UserPermission{
+		UserID:       uint(userID),
+		PermissionID: permission.ID,
+	}
+
+	_, err = service.Repository.GetUserPermission(ctx, data.UserID, data.PermissionID)
+	if err == nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El usuario ya tiene el permiso asignado")
+		return
+	}
+
+	if err = service.Repository.GrantPermission(ctx, &data); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
+	domain.JSON(w, r, http.StatusCreated, domain.Map{"user_permission": data})
+}
+
+func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *http.Request) {
+	userIDStr := chi.URLParam(r, "user_id")
+	permissionName := chi.URLParam(r, "permission_name")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := r.Context()
+
+	_, err = service.Repository.GetByID(ctx, uint(userID))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	permission, err := service.Permissions.GetByName(ctx, permissionName)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	user_permission, err := service.Repository.GetUserPermission(ctx, uint(userID), permission.ID)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = service.Repository.RevokePermission(ctx, user_permission.ID)
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	domain.JSON(w, r, http.StatusOK, domain.Map{})
+}
+
 func (service *UsersService) Routes() http.Handler {
 	r := chi.NewRouter()
 
@@ -125,6 +229,10 @@ func (service *UsersService) Routes() http.Handler {
 
 	r.Get("/{find}", service.GetOneHandler)
 	r.Delete("/{id}", service.DeleteHandler)
+
+	r.Get("/{user_id}/permissions", service.GetAllUserPermissionsHandler)
+	r.Patch("/{user_id}/permissions/{permission_name}", service.GrantPermissionHandler)
+	r.Delete("/{user_id}/permissions/{permission_name}", service.RevokePermissionHandler)
 
 	return r
 }

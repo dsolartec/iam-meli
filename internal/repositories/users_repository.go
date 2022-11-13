@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
@@ -13,7 +14,7 @@ type UsersRepository struct {
 }
 
 func (repository *UsersRepository) Create(ctx context.Context, data *models.User) error {
-	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id;"
+	query := "INSERT INTO users (id, username, password) VALUES (DEFAULT, $1, $2) RETURNING id;"
 
 	if err := data.EncryptPassword(); err != nil {
 		return err
@@ -74,6 +75,10 @@ func (repository *UsersRepository) GetByID(ctx context.Context, id uint) (models
 	var user models.User
 
 	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt); err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			err = errors.New("El usuario no existe")
+		}
+
 		return models.User{}, err
 	}
 
@@ -88,6 +93,10 @@ func (repository *UsersRepository) GetByUsername(ctx context.Context, username s
 	var user models.User
 
 	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt); err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			err = errors.New("El usuario no existe")
+		}
+
 		return models.User{}, err
 	}
 

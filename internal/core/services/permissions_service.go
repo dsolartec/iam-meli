@@ -9,6 +9,7 @@ import (
 	"github.com/dsolartec/iam-meli/internal/core/domain"
 	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
+	"github.com/dsolartec/iam-meli/internal/utils"
 	"github.com/go-chi/chi"
 )
 
@@ -17,9 +18,9 @@ type PermissionsService struct {
 }
 
 func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	var permission models.Permission
+	var data models.Permission
 
-	if err := json.NewDecoder(r.Body).Decode(&permission); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -28,14 +29,30 @@ func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.
 
 	ctx := r.Context()
 
-	if err := service.Repository.Create(ctx, &permission); err != nil {
+	if err := utils.ValidatePermissionName(data.Name); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), permission.ID))
+	_, err := service.Repository.GetByName(ctx, data.Name)
+	if err == nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
+		return
+	}
 
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"permission": permission})
+	if err = utils.ValidatePermissionDescription(data.Description); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = service.Repository.Create(ctx, &data); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
+
+	domain.JSON(w, r, http.StatusCreated, domain.Map{"permission": data})
 }
 
 func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +65,17 @@ func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.
 	}
 
 	ctx := r.Context()
+
+	permission, err := service.Repository.GetByID(ctx, uint(id))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if permission.Deletable == 0 {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser borrado")
+		return
+	}
 
 	err = service.Repository.Delete(ctx, uint(id))
 	if err != nil {
@@ -101,7 +129,7 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 
 	var data models.Permission
 
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -109,6 +137,41 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 	defer r.Body.Close()
 
 	ctx := r.Context()
+
+	permission, err := service.Repository.GetByID(ctx, uint(id))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if permission.Editable == 0 {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser editado")
+		return
+	}
+
+	if data.Name == "" {
+		data.Name = permission.Name
+	}
+
+	if err = utils.ValidatePermissionName(data.Name); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, err = service.Repository.GetByName(ctx, data.Name)
+	if err == nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
+		return
+	}
+
+	if data.Description == "" {
+		data.Description = permission.Description
+	}
+
+	if err = utils.ValidatePermissionDescription(data.Description); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	err = service.Repository.Update(ctx, uint(id), &data)
 	if err != nil {

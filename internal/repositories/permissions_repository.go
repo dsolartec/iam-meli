@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
@@ -13,7 +14,7 @@ type PermissionsRepository struct {
 }
 
 func (repository *PermissionsRepository) Create(ctx context.Context, data *models.Permission) error {
-	query := "INSERT INTO permissions (name, description) VALUES ($1, $2) RETURNING id;"
+	query := "INSERT INTO permissions (id, name, description) VALUES (DEFAULT, $1, $2) RETURNING id;"
 
 	data.CreatedAt = time.Now()
 	data.UpdatedAt = time.Now()
@@ -24,7 +25,7 @@ func (repository *PermissionsRepository) Create(ctx context.Context, data *model
 }
 
 func (repository *PermissionsRepository) Delete(ctx context.Context, id uint) error {
-	query := "DELETE FROM permissions WHERE id = $1;"
+	query := "DELETE FROM permissions WHERE id = $1 AND deletable = 1;"
 
 	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
 	if err != nil {
@@ -38,7 +39,7 @@ func (repository *PermissionsRepository) Delete(ctx context.Context, id uint) er
 }
 
 func (repository *PermissionsRepository) GetAll(ctx context.Context) ([]models.Permission, error) {
-	query := "SELECT id, name, description, deletable, created_at, updated_at FROM permissions;"
+	query := "SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions;"
 
 	rows, err := repository.Database.Conn.QueryContext(ctx, query)
 	if err != nil {
@@ -51,7 +52,7 @@ func (repository *PermissionsRepository) GetAll(ctx context.Context) ([]models.P
 	for rows.Next() {
 		var permission models.Permission
 
-		err = rows.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.CreatedAt, &permission.UpdatedAt)
+		err = rows.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.Editable, &permission.CreatedAt, &permission.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -63,14 +64,37 @@ func (repository *PermissionsRepository) GetAll(ctx context.Context) ([]models.P
 }
 
 func (repository *PermissionsRepository) GetByID(ctx context.Context, id uint) (models.Permission, error) {
-	query := "SELECT id, name, description, deletable, created_at, updated_at FROM permissions WHERE id = $1;"
+	query := "SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions WHERE id = $1;"
 
 	row := repository.Database.Conn.QueryRowContext(ctx, query, id)
 
 	var permission models.Permission
 
-	err := row.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.CreatedAt, &permission.UpdatedAt)
+	err := row.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.Editable, &permission.CreatedAt, &permission.UpdatedAt)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			err = errors.New("El permiso no existe")
+		}
+
+		return models.Permission{}, err
+	}
+
+	return permission, nil
+}
+
+func (repository *PermissionsRepository) GetByName(ctx context.Context, name string) (models.Permission, error) {
+	query := "SELECT id, name, description, deletable, editable, created_at, updated_at FROM permissions WHERE name = $1;"
+
+	row := repository.Database.Conn.QueryRowContext(ctx, query, name)
+
+	var permission models.Permission
+
+	err := row.Scan(&permission.ID, &permission.Name, &permission.Description, &permission.Deletable, &permission.Editable, &permission.CreatedAt, &permission.UpdatedAt)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			err = errors.New("El permiso no existe")
+		}
+
 		return models.Permission{}, err
 	}
 
@@ -78,7 +102,7 @@ func (repository *PermissionsRepository) GetByID(ctx context.Context, id uint) (
 }
 
 func (repository *PermissionsRepository) Update(ctx context.Context, id uint, data *models.Permission) error {
-	query := "UPDATE permissions SET name = $1, description = $2, updated_at = $3 WHERE id = $4"
+	query := "UPDATE permissions SET name = $1, description = $2, updated_at = $3 WHERE id = $4 AND editable = !"
 
 	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
 	if err != nil {

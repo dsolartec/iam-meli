@@ -9,6 +9,7 @@ import (
 	"github.com/dsolartec/iam-meli/internal/core/domain"
 	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
+	"github.com/dsolartec/iam-meli/internal/utils"
 	"github.com/go-chi/chi"
 )
 
@@ -17,9 +18,9 @@ type UsersService struct {
 }
 
 func (service *UsersService) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	var user models.User
+	var data models.User
 
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -28,16 +29,32 @@ func (service *UsersService) CreateHandler(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 
-	if err := service.Repository.Create(ctx, &user); err != nil {
+	if err := utils.ValidateUsername(data.Username); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	user.Password = ""
+	_, err := service.Repository.GetByUsername(ctx, data.Username)
+	if err == nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre de usuario ya está en uso")
+		return
+	}
 
-	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), user.ID))
+	if err = utils.ValidatePassword(data.Password); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"user": user})
+	if err := service.Repository.Create(ctx, &data); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	data.Password = ""
+
+	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
+
+	domain.JSON(w, r, http.StatusCreated, domain.Map{"user": data})
 }
 
 func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +67,12 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
+
+	_, err = service.Repository.GetByID(ctx, uint(id))
+	if err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	err = service.Repository.Delete(ctx, uint(id))
 	if err != nil {

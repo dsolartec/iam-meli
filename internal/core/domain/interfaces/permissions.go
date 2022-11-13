@@ -11,5 +11,6 @@ type PermissionsRepository interface {
 	Delete(ctx context.Context, id uint) error
 	GetAll(ctx context.Context) ([]models.Permission, error)
 	GetByID(ctx context.Context, id uint) (models.Permission, error)
+	GetByName(ctx context.Context, name string) (models.Permission, error)
 	Update(ctx context.Context, id uint, permission *models.Permission) error
 }

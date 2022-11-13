@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
   id         serial       NOT NULL,
-  username   VARCHAR(150) NOT NULL,
+  username   VARCHAR(10)  NOT NULL,
   password   VARCHAR(256) NOT NULL,
   created_at timestamp    DEFAULT now(),
 
@@ -13,22 +13,23 @@ INSERT INTO users (id, username, password)
 
 CREATE TABLE IF NOT EXISTS permissions (
   id          serial       NOT NULL,
-  name        VARCHAR(150) NOT NULL,
-  description VARCHAR(256) NOT NULL,
-  deletable   bool         DEFAULT TRUE,
+  name        VARCHAR(25)  NOT NULL,
+  description VARCHAR(150) NOT NULL,
+  deletable   SMALLINT     DEFAULT 1,
+  editable    SMALLINT     DEFAULT 1,
   created_at  timestamp    DEFAULT NOW(),
   updated_at  timestamp    DEFAULT NOW(),
 
   CONSTRAINT pk_permissions PRIMARY KEY(id)
 );
 
-INSERT INTO permissions (id, name, description, deletable)
+INSERT INTO permissions (id, name, description, deletable, editable)
   VALUES
-    (1, 'create_users', 'Poder crear usuarios dentro de la aplicación', FALSE),
-    (2, 'delete_users', 'Poder eliminar usuarios dentro de la aplicación', FALSE),
-    (3, 'create_permissions', 'Poder crear permisos para la aplicación', FALSE),
-    (4, 'update_permission', 'Poder actualizar un permiso de la aplicación', FALSE),
-    (5, 'delete_permissions', 'Poder eliminar permisos de la aplicación', FALSE)
+    (1, 'create_users', 'Poder crear usuarios dentro de la aplicación', 0, 0),
+    (2, 'delete_users', 'Poder eliminar usuarios dentro de la aplicación', 0, 0),
+    (3, 'create_permissions', 'Poder crear permisos para la aplicación', 0, 0),
+    (4, 'update_permission', 'Poder actualizar un permiso de la aplicación', 0, 0),
+    (5, 'delete_permissions', 'Poder eliminar permisos de la aplicación', 0, 0)
   ON CONFLICT(id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS user_permissions (

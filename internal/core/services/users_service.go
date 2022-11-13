@@ -120,7 +120,12 @@ func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter,
 	}
 
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -174,7 +179,12 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 
 	permission, err := service.Permissions.GetByName(ctx, permissionName)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
@@ -195,7 +205,7 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 	}
 
 	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"user_permission": data})
+	domain.JSON(w, r, http.StatusOK, domain.Map{"user_permission": data})
 }
 
 func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *http.Request) {
@@ -234,13 +244,23 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 
 	permission, err := service.Permissions.GetByName(ctx, permissionName)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 
 	user_permission, err := service.Users.GetUserPermission(ctx, user.ID, permission.ID)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no tiene este permiso asignado")
+		} else {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		}
+
 		return
 	}
 

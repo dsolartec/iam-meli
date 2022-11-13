@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
@@ -146,10 +145,6 @@ func (repository *UsersRepository) GetUserPermission(ctx context.Context, userID
 	var user_permission models.UserPermission
 
 	if err := row.Scan(&user_permission.ID, &user_permission.UserID, &user_permission.PermissionID); err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			err = errors.New("El usuario no tiene el permiso asignado")
-		}
-
 		return models.UserPermission{}, err
 	}
 

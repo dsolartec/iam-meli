@@ -173,15 +173,17 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 		data.Name = permission.Name
 	}
 
-	if err = utils.ValidatePermissionName(data.Name); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
+	if data.Name != permission.Name {
+		if err = utils.ValidatePermissionName(data.Name); err != nil {
+			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			return
+		}
 
-	_, err = service.Permissions.GetByName(ctx, data.Name)
-	if err == nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
-		return
+		_, err = service.Permissions.GetByName(ctx, data.Name)
+		if err == nil {
+			domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
+			return
+		}
 	}
 
 	if data.Description == "" {

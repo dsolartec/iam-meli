@@ -10,7 +10,7 @@
 - [¿Cómo ejecutar con Docker?](#¿cómo-ejecutar-con-docker)
 - [Endpoints](#endpoints)
 
-## [DEMO](http://iam-meli.danielsolarte.co/)
+## [DEMO (Documentación API)](http://iam-meli.danielsolarte.co/)
 
 ## Requisitos
 
@@ -31,13 +31,15 @@ El API tiene un sistema de autenticación que requiere un registro previo (`/api
 
 Con el registro o el inicio de sesión obtienes un token de acceso `accessToken` para realizar autenticación mediante Bearer (`Authorization` header), este trae consigo el ID del usuario que generó el token y con este se validará que el usuario posea los permisos para ciertas rutas protegidas.
 
-El sistema cuenta con dos niveles de protección:
+El API cuenta con tres tipos de rutas diferentes:
 
-1. **Básico**, en este puede entrar cualquier usuario que tenga un token de acceso.
+1. **Básico**, en estas rutas puede entrar cualquier usuario sin un token de acceso (`/api/auth/login` y `/api/auth/signup`).
 
-2. **Permisos**, en este pueden entrar únicamente los usuarios que tengan cierto permiso asignado que, dependerá de cada ruta (En la documentación de Swagger se encuentra especificado por ruta).
+1. **Autenticado**, en estas puede entrar cualquier usuario que tenga un token de acceso.
 
-    > **IMPORTANTE** Es importante tener en cuenta que, para otorgarle un permiso a un usuario o quitárselo, el usuario autenticado debe tener asignado el permiso `grant_permission` o `revoke_permission` respectivamente.
+2. **Exclusivas**, en estas pueden entrar únicamente los usuarios que tengan cierto permiso asignado que, dependerá de cada ruta (En la documentación de Swagger se encuentra especificado por ruta).
+
+    > **IMPORTANTE** Se debe tener en cuenta que, para otorgarle un permiso a un usuario o quitárselo, el usuario autenticado debe tener asignado el permiso `grant_permission` o `revoke_permission` respectivamente.
 
 > **NOTA** El usuario autenticado no puede otorgarse o quitarse permisos a si mismo y mucho menos puede eliminar su propia cuenta.
 
@@ -59,7 +61,7 @@ La arquitectura hexagonal permite tener todo agrupado por secciones (servicios, 
 
 #### ¿Por qué PostgreSQL?
 
-Decidí esta base de datos por ser relacional; ya que, al ser una aplicación de autorizaciones se tiene una relación estrecha entre los usuarios y los permisos dinámicos.
+Decidí esta base de datos por ser relacional; ya que, al ser una aplicación de autorizaciones se tiene una relación estrecha entre los usuarios y los permisos dinámicos. Además, considero que PostgreSQL tiene mejor apoyo por parte de la comunidad open source que MySQL, dando lugar a más robustas dependencias para este.
 
 #### Estructura
 

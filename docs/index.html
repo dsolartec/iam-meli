@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="IAM MeLi API Docs"
+  />
+  <title>IAM MeLi API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js" crossorigin></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        spec: {
+          openapi: '3.0.2',
+          info: {
+            title: 'IAM MeLi API Docs',
+            description: 'IAM MeLi API Docs',
+            version: '1.0',
+          },
+          servers: [
+            { url: 'http://localhost:80/', description: 'Localhost' }
+          ],
+          tags: [
+            { name: 'Permisos' },
+            { name: 'Usuarios' },
+            { name: 'Permisos de usuarios' },
+          ],
+          paths: {
+            '/api/permissions': {
+              get: {
+                summary: 'Devuelve todos los permisos guardados en la base de datos',
+                tags: ['Permisos'],
+                responses: {
+                  200: {
+                    description: 'Listado de permisos',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            permissions: { type: 'array', items: { '$ref': '#/components/schemas/Permission' } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la consulta',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+              },
+              post: {
+                summary: 'Crea un permiso',
+                tags: ['Permisos'],
+                requestBody: {
+                  required: true,
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string', example: 'permission_test' },
+                          description: { type: 'string', example: 'Este es un permiso de prueba' },
+                        },
+                        required: ['name', 'description'],
+                      },
+                    },
+                  },
+                },
+                responses: {
+                  201: {
+                    description: 'Permiso creado exitosamente',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            permission: { '$ref': '#/components/schemas/Permission' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la creación',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+              },
+            },
+            '/api/permissions/{id}': {
+              get: {
+                summary: 'Devuelve un permiso mediante su ID',
+                tags: ['Permisos'],
+                responses: {
+                  200: {
+                    description: 'Permiso encontrado',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            permission: { '$ref': '#/components/schemas/Permission' }
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la búsqueda',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    description: 'ID del permiso',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                ],
+              },
+              put: {
+                summary: 'Actualiza un permiso mediante su ID',
+                tags: ['Permisos'],
+                responses: {
+                  200: { description: 'Permiso actualizado' },
+                  500: {
+                    description: 'Error en la eliminación',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    description: 'ID del permiso',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                ],
+              },
+              delete: {
+                summary: 'Elimina un permiso mediante su ID',
+                tags: ['Permisos'],
+                responses: {
+                  200: { description: 'Permiso eliminado' },
+                  500: {
+                    description: 'Error en la eliminación',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    description: 'ID del permiso',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                ],
+              },
+            },
+            '/api/users': {
+              get: {
+                summary: 'Devuelve todos los usuarios guardados en la base de datos',
+                tags: ['Usuarios'],
+                responses: {
+                  200: {
+                    description: 'Listado de usuarios',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            users: { type: 'array', items: { '$ref': '#/components/schemas/User' } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la consulta',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+              },
+              post: {
+                summary: 'Crea un usuario',
+                tags: ['Usuarios'],
+                requestBody: {
+                  required: true,
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          username: { type: 'string', example: 'superadmin' },
+                          password: { type: 'string', format: 'password', example: '12345' },
+                        },
+                        required: ['username', 'password'],
+                      },
+                    },
+                  },
+                },
+                responses: {
+                  201: {
+                    description: 'Usuario creado exitosamente',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            user: { '$ref': '#/components/schemas/User' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la creación',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+              },
+            },
+            '/api/users/{id}': {
+              get: {
+                summary: 'Devuelve un usuario mediante su ID o nombre de usuario',
+                tags: ['Usuarios'],
+                responses: {
+                  200: {
+                    description: 'Usuario encontrado',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            user: { '$ref': '#/components/schemas/User' }
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la búsqueda',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    description: 'ID o nombre del usuario',
+                    required: true,
+                    schema: { type: 'string' },
+                    style: 'simple',
+                  },
+                ],
+              },
+              delete: {
+                summary: 'Elimina un usuario mediante su ID',
+                tags: ['Usuarios'],
+                responses: {
+                  200: { description: 'Usuario eliminado' },
+                  500: {
+                    description: 'Error en la eliminación',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    description: 'ID del usuario',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                ],
+              },
+            },
+            '/api/users/{user_id}/permissions': {
+              get: {
+                summary: 'Devuelve todos los permisos de un usuario',
+                tags: ['Permisos de usuarios'],
+                responses: {
+                  200: {
+                    description: 'Listado de permisos del usuario',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            user_permissions: { type: 'array', items: { '$ref': '#/components/schemas/UserPermission' } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la consulta',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'user_id',
+                    in: 'path',
+                    description: 'ID del usuario',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                ],
+              },
+            },
+            '/api/users/{user_id}/permissions/{permission_name}': {
+              patch: {
+                summary: 'Concede un permiso a un usuario',
+                tags: ['Permisos de usuarios'],
+                responses: {
+                  200: {
+                    description: 'Permiso concedido al usuario',
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            user_permission: { '$ref': '#/components/schemas/UserPermission' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  500: {
+                    description: 'Error en la consulta',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'user_id',
+                    in: 'path',
+                    description: 'ID del usuario',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                  {
+                    name: 'permission_name',
+                    in: 'path',
+                    description: 'Nombre del permiso',
+                    required: true,
+                    schema: { type: 'string' },
+                    style: 'simple',
+                  },
+                ],
+              },
+              delete: {
+                summary: 'Revoca un permiso a un usuario',
+                tags: ['Permisos de usuarios'],
+                responses: {
+                  200: { description: 'Permiso revocado al usuario' },
+                  500: {
+                    description: 'Error en la consulta',
+                    content: {
+                      'application/json': {
+                        schema: { '$ref': '#/components/schemas/ErrorResponse' },
+                      }
+                    },
+                  },
+                },
+                parameters: [
+                  {
+                    name: 'user_id',
+                    in: 'path',
+                    description: 'ID del usuario',
+                    required: true,
+                    schema: { type: 'integer' },
+                    style: 'simple',
+                  },
+                  {
+                    name: 'permission_name',
+                    in: 'path',
+                    description: 'Nombre del permiso',
+                    required: true,
+                    schema: { type: 'string' },
+                    style: 'simple',
+                  },
+                ],
+              },
+            },
+          },
+          components: {
+            schemas: {
+              ErrorResponse: {
+                type: 'object',
+                properties: {
+                  message: { type: 'string' },
+                },
+              },
+              Permission: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer', format: 'int64', example: 1 },
+                  name: { type: 'string', example: 'create_users' },
+                  description: { type: 'string', example: 'Poder crear usuarios dentro de la aplicación' },
+                  deletable: { type: 'boolean', example: false },
+                  editable: { type: 'boolean', example: false },
+                  created_at: { type: 'string', format: 'date-time', example: '2022-11-13T01:36:41.484521Z' },
+                  updated_at: { type: 'string', format: 'date-time', example: '2022-11-13T01:36:41.484521Z' },
+                },
+              },
+              User: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer', format: 'int64', example: 1 },
+                  username: { type: 'string', example: 'superadmin' },
+                  created_at: { type: 'string', format: 'date-time', example: '2022-11-13T01:36:41.484521Z' },
+                },
+              },
+              UserPermission: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer', format: 'int64', example: 1 },
+                  user_id: { type: 'integer', format: 'int64', example: 1 },
+                  permission_id: { type: 'integer', format: 'int64', example: 1 },
+                },
+              },
+            },
+          },
+        },
+        dom_id: '#swagger-ui',
+      });
+    };
+  </script>
+</body>
+</html>

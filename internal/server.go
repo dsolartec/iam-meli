@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -14,12 +15,23 @@ type Server struct {
 	server *http.Server
 }
 
+func documentationHandler(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadFile("./docs/index.html")
+	if err != nil {
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write(b)
+}
+
 func New(port string) (*Server, error) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	r.Get("/", documentationHandler)
 	r.Mount("/api", services.New())
 
 	serv := &http.Server{

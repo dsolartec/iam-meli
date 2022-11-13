@@ -29,6 +29,7 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URI=postgres://meli:meli2022@database:5432/postgres?sslmode=disable
+      - JWT_KEY=MeLi2022
       - PORT=80
     ports:
       - '80:80'

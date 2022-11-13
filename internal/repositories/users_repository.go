@@ -84,14 +84,24 @@ func (repository *UsersRepository) GetByID(ctx context.Context, id uint) (models
 	return user, nil
 }
 
-func (repository *UsersRepository) GetByUsername(ctx context.Context, username string) (models.User, error) {
+func (repository *UsersRepository) GetByUsername(ctx context.Context, username string, with_password bool) (models.User, error) {
 	query := "SELECT id, username, created_at FROM users WHERE username = $1;"
+	if with_password {
+		query = "SELECT id, username, password, created_at FROM users WHERE username = $1;"
+	}
 
 	row := repository.Database.Conn.QueryRowContext(ctx, query, username)
 
+	var err error
 	var user models.User
 
-	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt); err != nil {
+	if with_password {
+		err = row.Scan(&user.ID, &user.Username, &user.Password, &user.CreatedAt)
+	} else {
+		err = row.Scan(&user.ID, &user.Username, &user.CreatedAt)
+	}
+
+	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			err = errors.New("El usuario no existe")
 		}

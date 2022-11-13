@@ -11,21 +11,34 @@ import (
 func New() http.Handler {
 	r := chi.NewRouter()
 
+	auth_repository := repositories.AuthorizationRepository{
+		Database: database.New(),
+	}
+
 	permissions_repository := repositories.PermissionsRepository{
 		Database: database.New(),
 	}
 
-	permissions := &PermissionsService{
-		Repository: &permissions_repository,
+	users_repository := repositories.UsersRepository{
+		Database: database.New(),
 	}
 
-	users := &UsersService{
+	authorization := AuthorizationService{
+		Users: &users_repository,
+	}
+
+	permissions := PermissionsService{
+		Auth:        &auth_repository,
 		Permissions: &permissions_repository,
-		Repository: &repositories.UsersRepository{
-			Database: database.New(),
-		},
 	}
 
+	users := UsersService{
+		Auth:        &auth_repository,
+		Permissions: &permissions_repository,
+		Users:       &users_repository,
+	}
+
+	r.Mount("/auth", authorization.Routes())
 	r.Mount("/permissions", permissions.Routes())
 	r.Mount("/users", users.Routes())
 

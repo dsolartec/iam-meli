@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/dsolartec/iam-meli/internal/core/domain/dto"
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
 	"github.com/dsolartec/iam-meli/internal/database"
 )
@@ -101,7 +102,7 @@ func (repository *PermissionsRepository) GetByName(ctx context.Context, name str
 	return permission, nil
 }
 
-func (repository *PermissionsRepository) Update(ctx context.Context, id uint, data *models.Permission) error {
+func (repository *PermissionsRepository) Update(ctx context.Context, id uint, data *dto.UpdatePermissionBody) error {
 	query := "UPDATE permissions SET name = $1, description = $2, updated_at = $3 WHERE id = $4 AND editable = !"
 
 	stmt, err := repository.Database.Conn.PrepareContext(ctx, query)
@@ -111,8 +112,6 @@ func (repository *PermissionsRepository) Update(ctx context.Context, id uint, da
 
 	defer stmt.Close()
 
-	data.UpdatedAt = time.Now()
-
-	_, err = stmt.ExecContext(ctx, data.Name, data.Description, data.UpdatedAt, id)
+	_, err = stmt.ExecContext(ctx, data.Name, data.Description, time.Now(), id)
 	return err
 }

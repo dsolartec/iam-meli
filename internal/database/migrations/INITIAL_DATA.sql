@@ -30,11 +30,12 @@ CREATE TABLE IF NOT EXISTS permissions (
 
 INSERT INTO permissions (id, name, description, deletable, editable)
   VALUES
-    (1, 'create_users', 'Poder crear usuarios dentro de la aplicación', 0, 0),
-    (2, 'delete_users', 'Poder eliminar usuarios dentro de la aplicación', 0, 0),
-    (3, 'create_permissions', 'Poder crear permisos para la aplicación', 0, 0),
-    (4, 'update_permission', 'Poder actualizar un permiso de la aplicación', 0, 0),
-    (5, 'delete_permissions', 'Poder eliminar permisos de la aplicación', 0, 0)
+    (1, 'delete_user', 'Poder eliminar usuarios dentro de la aplicación', 0, 0),
+    (2, 'create_permission', 'Poder crear permisos para la aplicación', 0, 0),
+    (3, 'update_permission', 'Poder actualizar un permiso de la aplicación', 0, 0),
+    (4, 'grant_permission', 'Poder añadir un permiso a un usuario', 0, 0),
+    (5, 'revoke_permission', 'Poder eliminar un permiso a un usuario', 0, 0),
+    (6, 'delete_permission', 'Poder eliminar permisos de la aplicación', 0, 0)
   ON CONFLICT(id) DO NOTHING;
 
 SELECT SETVAL(
@@ -53,7 +54,7 @@ CREATE TABLE IF NOT EXISTS user_permissions (
 );
 
 INSERT INTO user_permissions (id, user_id, permission_id)
-  VALUES (1, 1, 1), (2, 1, 2), (3, 1, 3), (4, 1, 4), (5, 1, 5)
+  VALUES (1, 1, 1), (2, 1, 2), (3, 1, 3), (4, 1, 4), (5, 1, 5), (6, 1, 6)
   ON CONFLICT(id) DO NOTHING;
 
 SELECT SETVAL(

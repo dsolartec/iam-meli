@@ -1,7 +1,7 @@
 package services
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,73 +9,45 @@ import (
 	"github.com/dsolartec/iam-meli/internal/core/domain"
 	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
 	"github.com/dsolartec/iam-meli/internal/core/domain/models"
-	"github.com/dsolartec/iam-meli/internal/utils"
+	"github.com/dsolartec/iam-meli/internal/core/middlewares"
 	"github.com/go-chi/chi"
 )
 
 type UsersService struct {
-	Repository  interfaces.UsersRepository
+	Auth        interfaces.AuthorizationRepository
+	Users       interfaces.UsersRepository
 	Permissions interfaces.PermissionsRepository
 }
 
-func (service *UsersService) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	var data models.User
-
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	defer r.Body.Close()
-
-	ctx := r.Context()
-
-	if err := utils.ValidateUsername(data.Username); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	_, err := service.Repository.GetByUsername(ctx, data.Username)
-	if err == nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre de usuario ya está en uso")
-		return
-	}
-
-	if err = utils.ValidatePassword(data.Password); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if err := service.Repository.Create(ctx, &data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	data.Password = ""
-
-	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
-
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"user": data})
-}
-
 func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	ctx := r.Context()
 
-	_, err = service.Repository.GetByID(ctx, uint(id))
+	if err := service.Auth.VerifyPermission(ctx, "delete_user"); err != nil {
+		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	find := chi.URLParam(r, "find")
+
+	user := models.User{}
+
+	id, err := strconv.Atoi(find)
+	if err != nil {
+		user, err = service.Users.GetByUsername(ctx, find, false)
+	} else {
+		user, err = service.Users.GetByID(ctx, uint(id))
+	}
+
+	if currentUserID := ctx.Value("current_user_id").(int); err == nil && currentUserID == int(user.ID) {
+		err = errors.New("No puedes eliminar el usuario con el que estás logeado")
+	}
+
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = service.Repository.Delete(ctx, uint(id))
+	err = service.Users.Delete(ctx, user.ID)
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -87,7 +59,7 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 func (service *UsersService) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	users, err := service.Repository.GetAll(ctx)
+	users, err := service.Users.GetAll(ctx)
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -97,17 +69,17 @@ func (service *UsersService) GetAllHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Request) {
-	find := chi.URLParam(r, "find")
-
 	ctx := r.Context()
+
+	find := chi.URLParam(r, "find")
 
 	user := models.User{}
 
 	id, err := strconv.Atoi(find)
 	if err != nil {
-		user, err = service.Repository.GetByUsername(ctx, find)
+		user, err = service.Users.GetByUsername(ctx, find, false)
 	} else {
-		user, err = service.Repository.GetByID(ctx, uint(id))
+		user, err = service.Users.GetByID(ctx, uint(id))
 	}
 
 	if err != nil {
@@ -119,17 +91,25 @@ func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDStr := chi.URLParam(r, "user_id")
+	ctx := r.Context()
 
-	userID, err := strconv.Atoi(userIDStr)
+	find := chi.URLParam(r, "find")
+
+	user := models.User{}
+
+	userID, err := strconv.Atoi(find)
+	if err != nil {
+		user, err = service.Users.GetByUsername(ctx, find, false)
+	} else {
+		user, err = service.Users.GetByID(ctx, uint(userID))
+	}
+
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx := r.Context()
-
-	user_permissions, err := service.Repository.GetAllUserPermissions(ctx, uint(userID))
+	user_permissions, err := service.Users.GetAllUserPermissions(ctx, user.ID)
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -139,18 +119,29 @@ func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter,
 }
 
 func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *http.Request) {
-	userIDStr := chi.URLParam(r, "user_id")
-	permissionName := chi.URLParam(r, "permission_name")
+	ctx := r.Context()
 
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
+	if err := service.Auth.VerifyPermission(ctx, "grant_permission"); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx := r.Context()
+	find := chi.URLParam(r, "find")
+	permissionName := chi.URLParam(r, "permission_name")
 
-	_, err = service.Repository.GetByID(ctx, uint(userID))
+	user := models.User{}
+
+	userID, err := strconv.Atoi(find)
+	if err != nil {
+		user, err = service.Users.GetByUsername(ctx, find, false)
+	} else {
+		user, err = service.Users.GetByID(ctx, uint(userID))
+	}
+
+	if currentUserID := ctx.Value("current_user_id").(int); err == nil && currentUserID == int(user.ID) {
+		err = errors.New("No puedes otorgarte un permiso a ti mismo")
+	}
+
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -163,17 +154,17 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 	}
 
 	data := models.UserPermission{
-		UserID:       uint(userID),
+		UserID:       user.ID,
 		PermissionID: permission.ID,
 	}
 
-	_, err = service.Repository.GetUserPermission(ctx, data.UserID, data.PermissionID)
+	_, err = service.Users.GetUserPermission(ctx, data.UserID, data.PermissionID)
 	if err == nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, "El usuario ya tiene el permiso asignado")
 		return
 	}
 
-	if err = service.Repository.GrantPermission(ctx, &data); err != nil {
+	if err = service.Users.GrantPermission(ctx, &data); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -183,18 +174,29 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 }
 
 func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *http.Request) {
-	userIDStr := chi.URLParam(r, "user_id")
-	permissionName := chi.URLParam(r, "permission_name")
+	ctx := r.Context()
 
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
+	if err := service.Auth.VerifyPermission(ctx, "revoke_permission"); err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx := r.Context()
+	find := chi.URLParam(r, "find")
+	permissionName := chi.URLParam(r, "permission_name")
 
-	_, err = service.Repository.GetByID(ctx, uint(userID))
+	user := models.User{}
+
+	userID, err := strconv.Atoi(find)
+	if err != nil {
+		user, err = service.Users.GetByUsername(ctx, find, false)
+	} else {
+		user, err = service.Users.GetByID(ctx, uint(userID))
+	}
+
+	if currentUserID := ctx.Value("current_user_id").(int); err == nil && currentUserID == int(user.ID) {
+		err = errors.New("No puedes quitarte un permiso a ti mismo")
+	}
+
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -206,13 +208,13 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 		return
 	}
 
-	user_permission, err := service.Repository.GetUserPermission(ctx, uint(userID), permission.ID)
+	user_permission, err := service.Users.GetUserPermission(ctx, user.ID, permission.ID)
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = service.Repository.RevokePermission(ctx, user_permission.ID)
+	err = service.Users.RevokePermission(ctx, user_permission.ID)
 	if err != nil {
 		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -224,15 +226,16 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 func (service *UsersService) Routes() http.Handler {
 	r := chi.NewRouter()
 
+	r.Use(middlewares.Authorizator)
+
 	r.Get("/", service.GetAllHandler)
-	r.Post("/", service.CreateHandler)
 
 	r.Get("/{find}", service.GetOneHandler)
-	r.Delete("/{id}", service.DeleteHandler)
+	r.Delete("/{find}", service.DeleteHandler)
 
-	r.Get("/{user_id}/permissions", service.GetAllUserPermissionsHandler)
-	r.Patch("/{user_id}/permissions/{permission_name}", service.GrantPermissionHandler)
-	r.Delete("/{user_id}/permissions/{permission_name}", service.RevokePermissionHandler)
+	r.Get("/{find}/permissions", service.GetAllUserPermissionsHandler)
+	r.Patch("/{find}/permissions/{permission_name}", service.GrantPermissionHandler)
+	r.Delete("/{find}/permissions/{permission_name}", service.RevokePermissionHandler)
 
 	return r
 }

@@ -24,7 +24,8 @@
             version: '1.0',
           },
           servers: [
-            { url: 'http://localhost:80/', description: 'Localhost' }
+            { url: 'http://iam-meli.danielsolarte.co', description: 'DEMO' },
+            { url: 'http://localhost', description: 'Localhost' }
           ],
           tags: [
             { name: 'Autenticación' },
@@ -33,7 +34,7 @@
             { name: 'Permisos de usuarios' },
           ],
           paths: {
-            '/auth/login': {
+            '/api/auth/login': {
               post: {
                 summary: 'Inicia sesión',
                 tags: ['Autenticación'],
@@ -78,7 +79,7 @@
                 },
               },
             },
-            '/auth/signup': {
+            '/api/auth/signup': {
               post: {
                 summary: 'Registra un usuario',
                 tags: ['Autenticación'],

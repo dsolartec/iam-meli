@@ -14,7 +14,7 @@ type PermissionsRepository struct {
 }
 
 func (repository *PermissionsRepository) Create(ctx context.Context, data *models.Permission) error {
-	query := "INSERT INTO permissions (id, name, description) VALUES (DEFAULT, $1, $2) RETURNING id;"
+	query := "INSERT INTO permissions (name, description) VALUES ($1, $2) RETURNING id;"
 
 	data.CreatedAt = time.Now()
 	data.UpdatedAt = time.Now()

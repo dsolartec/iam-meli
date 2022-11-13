@@ -14,7 +14,7 @@ type UsersRepository struct {
 }
 
 func (repository *UsersRepository) Create(ctx context.Context, data *models.User) error {
-	query := "INSERT INTO users (id, username, password) VALUES (DEFAULT, $1, $2) RETURNING id;"
+	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id;"
 
 	if err := data.EncryptPassword(); err != nil {
 		return err
@@ -42,7 +42,7 @@ func (repository *UsersRepository) Delete(ctx context.Context, id uint) error {
 }
 
 func (repository *UsersRepository) GetAll(ctx context.Context) ([]models.User, error) {
-	query := "SELECT id, username, password, created_at FROM users;"
+	query := "SELECT id, username, created_at FROM users;"
 
 	rows, err := repository.Database.Conn.QueryContext(ctx, query)
 	if err != nil {
@@ -55,7 +55,7 @@ func (repository *UsersRepository) GetAll(ctx context.Context) ([]models.User, e
 	for rows.Next() {
 		var user models.User
 
-		err = rows.Scan(&user.ID, &user.Username, &user.Password, &user.CreatedAt)
+		err = rows.Scan(&user.ID, &user.Username, &user.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func (repository *UsersRepository) GetUserPermission(ctx context.Context, userID
 }
 
 func (repository *UsersRepository) GrantPermission(ctx context.Context, data *models.UserPermission) error {
-	query := "INSERT INTO user_permissions (id, user_id, permission_id) VALUES (DEFAULT, $1, $2) RETURNING id;"
+	query := "INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) RETURNING id;"
 
 	row := repository.Database.Conn.QueryRowContext(ctx, query, data.UserID, data.PermissionID)
 

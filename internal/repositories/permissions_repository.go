@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain/dto"
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
 	"github.com/dsolartec/iam-meli/internal/database"
+	"github.com/dsolartec/iam-meli/pkg/dto"
+	"github.com/dsolartec/iam-meli/pkg/models"
 )
 
 type PermissionsRepository struct {

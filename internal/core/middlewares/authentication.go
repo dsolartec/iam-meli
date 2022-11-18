@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain"
+	"github.com/dsolartec/iam-meli/pkg"
 )
 
 func parseTokenFromAuthorization(authorization string) (string, error) {
@@ -27,13 +27,13 @@ func Authorizator(next http.Handler) http.Handler {
 
 		token, err := parseTokenFromAuthorization(authorization)
 		if err != nil {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		claim, err := domain.ParseToken(token, jwtKey)
+		claim, err := pkg.ParseToken(token, jwtKey)
 		if err != nil {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 

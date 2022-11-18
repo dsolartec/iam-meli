@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/dsolartec/iam-meli/internal/core/domain"
+	"github.com/dsolartec/iam-meli/pkg"
 )
 
 func TestPermissions_InvalidToken(t *testing.T) {
@@ -38,7 +38,7 @@ func TestPermissions_InvalidToken(t *testing.T) {
 				t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 			}
 
-			var errorMessage domain.ErrorMessage
+			var errorMessage pkg.ErrorMessage
 			if err := json.Unmarshal(b, &errorMessage); err != nil {
 				t.Fatalf("Could not unmarshall response %v", err)
 			}
@@ -73,7 +73,7 @@ func TestPermissions_NoAuthorized(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -148,7 +148,7 @@ func TestCreatePermission_ValidationErrors(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -181,7 +181,7 @@ func TestCreatePermission_DuplicatedPermissionName(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -235,7 +235,7 @@ func TestDeletePermission_NotFound(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -263,7 +263,7 @@ func TestDeletePermission_NoDeletable(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -326,7 +326,7 @@ func TestGetAllPermissions_Success(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
 	}
 
-	var data domain.Map
+	var data pkg.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -395,7 +395,7 @@ func TestGetPermissionByID_Success(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var data domain.Map
+	var data pkg.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -472,7 +472,7 @@ func TestUpdatePermission_ValidationErrors(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -509,7 +509,7 @@ func TestUpdatePermission_DuplicatePermissionName(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -534,7 +534,7 @@ func TestUpdatePermission_NotFound(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -562,7 +562,7 @@ func TestUpdatePermission_NoEditable(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}

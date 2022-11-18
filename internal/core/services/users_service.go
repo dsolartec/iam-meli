@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain"
-	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
 	"github.com/dsolartec/iam-meli/internal/core/middlewares"
+	"github.com/dsolartec/iam-meli/pkg"
+	"github.com/dsolartec/iam-meli/pkg/interfaces"
+	"github.com/dsolartec/iam-meli/pkg/models"
 	"github.com/go-chi/chi"
 )
 
@@ -23,7 +23,7 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "delete_user"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -44,9 +44,9 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -54,11 +54,11 @@ func (service *UsersService) DeleteHandler(w http.ResponseWriter, r *http.Reques
 
 	err = service.Users.Delete(ctx, user.ID)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{})
 }
 
 func (service *UsersService) GetAllHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,16 +66,16 @@ func (service *UsersService) GetAllHandler(w http.ResponseWriter, r *http.Reques
 
 	users, err := service.Users.GetAll(ctx)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if users == nil || len(users) == 0 {
-		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{"users": users})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"users": users})
 }
 
 func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Request) {
@@ -94,15 +94,15 @@ func (service *UsersService) GetOneHandler(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+			pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{"user": user})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"user": user})
 }
 
 func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -121,9 +121,9 @@ func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter,
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -131,23 +131,23 @@ func (service *UsersService) GetAllUserPermissionsHandler(w http.ResponseWriter,
 
 	user_permissions, err := service.Users.GetAllUserPermissions(ctx, user.ID)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if user_permissions == nil || len(user_permissions) == 0 {
-		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{"user_permissions": user_permissions})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"user_permissions": user_permissions})
 }
 
 func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "grant_permission"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -169,9 +169,9 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -180,9 +180,9 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 	permission, err := service.Permissions.GetByName(ctx, permissionName)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -195,24 +195,24 @@ func (service *UsersService) GrantPermissionHandler(w http.ResponseWriter, r *ht
 
 	_, err = service.Users.GetUserPermission(ctx, data.UserID, data.PermissionID)
 	if err == nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El usuario ya tiene el permiso asignado")
+		pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario ya tiene el permiso asignado")
 		return
 	}
 
 	if err = service.Users.GrantPermission(ctx, &data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), data.ID))
-	domain.JSON(w, r, http.StatusOK, domain.Map{"user_permission": data})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"user_permission": data})
 }
 
 func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "revoke_permission"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -234,9 +234,9 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -245,9 +245,9 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 	permission, err := service.Permissions.GetByName(ctx, permissionName)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -256,9 +256,9 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 	user_permission, err := service.Users.GetUserPermission(ctx, user.ID, permission.ID)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El usuario no tiene este permiso asignado")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El usuario no tiene este permiso asignado")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
@@ -266,11 +266,11 @@ func (service *UsersService) RevokePermissionHandler(w http.ResponseWriter, r *h
 
 	err = service.Users.RevokePermission(ctx, user_permission.ID)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{})
 }
 
 func (service *UsersService) Routes() http.Handler {

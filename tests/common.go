@@ -15,8 +15,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/dsolartec/iam-meli/internal"
-	"github.com/dsolartec/iam-meli/internal/core/domain"
 	"github.com/dsolartec/iam-meli/internal/database"
+	"github.com/dsolartec/iam-meli/pkg"
 )
 
 type anyPassword struct{}
@@ -94,7 +94,7 @@ func generateAccessToken(t *testing.T, mock sqlmock.Sqlmock, permission_names []
 	}
 
 	// Generamos el token para el usuario con ID 1
-	claim := domain.Claim{ID: 1}
+	claim := pkg.Claim{ID: 1}
 
 	token, err := claim.GenerateToken("MeLiTest")
 	if err != nil {

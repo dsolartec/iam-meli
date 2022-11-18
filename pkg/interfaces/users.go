@@ -3,7 +3,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
+	"github.com/dsolartec/iam-meli/pkg/models"
 )
 
 type UsersRepository interface {

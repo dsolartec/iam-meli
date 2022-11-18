@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain"
-	"github.com/dsolartec/iam-meli/internal/core/domain/dto"
-	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
 	"github.com/dsolartec/iam-meli/internal/core/middlewares"
-	"github.com/dsolartec/iam-meli/internal/utils"
+	"github.com/dsolartec/iam-meli/pkg"
+	"github.com/dsolartec/iam-meli/pkg/dto"
+	"github.com/dsolartec/iam-meli/pkg/interfaces"
+	"github.com/dsolartec/iam-meli/pkg/models"
+	"github.com/dsolartec/iam-meli/pkg/utils"
 	"github.com/go-chi/chi"
 )
 
@@ -24,32 +24,32 @@ func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "create_permission"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	var data dto.CreatePermissionBody
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	defer r.Body.Close()
 
 	if err := utils.ValidatePermissionName(data.Name); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	_, err := service.Permissions.GetByName(ctx, data.Name)
 	if err == nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
+		pkg.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
 		return
 	}
 
 	if err = utils.ValidatePermissionDescription(data.Description); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -61,20 +61,20 @@ func (service *PermissionsService) CreateHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err = service.Permissions.Create(ctx, &permission); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	w.Header().Add("Location", fmt.Sprintf("%s%d", r.URL.String(), permission.ID))
 
-	domain.JSON(w, r, http.StatusCreated, domain.Map{"permission": permission})
+	pkg.JSON(w, r, http.StatusCreated, pkg.Map{"permission": permission})
 }
 
 func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "delete_permission"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -82,33 +82,33 @@ func (service *PermissionsService) DeleteHandler(w http.ResponseWriter, r *http.
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
 	}
 
 	if !permission.Deletable {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser borrado")
+		pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser borrado")
 		return
 	}
 
 	err = service.Permissions.Delete(ctx, uint(id))
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{})
 }
 
 func (service *PermissionsService) GetAllHandler(w http.ResponseWriter, r *http.Request) {
@@ -116,16 +116,16 @@ func (service *PermissionsService) GetAllHandler(w http.ResponseWriter, r *http.
 
 	permissions, err := service.Permissions.GetAll(ctx)
 	if err != nil {
-		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		return
 	}
 
 	if permissions == nil || len(permissions) == 0 {
-		domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+		pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{"permissions": permissions})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"permissions": permissions})
 }
 
 func (service *PermissionsService) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +133,7 @@ func (service *PermissionsService) GetByIDHandler(w http.ResponseWriter, r *http
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -142,22 +142,22 @@ func (service *PermissionsService) GetByIDHandler(w http.ResponseWriter, r *http
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.JSON(w, r, http.StatusNoContent, domain.Map{})
+			pkg.JSON(w, r, http.StatusNoContent, pkg.Map{})
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{"permission": permission})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{"permission": permission})
 }
 
 func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := service.Auth.VerifyPermission(ctx, "update_permission"); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -165,30 +165,30 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	permission, err := service.Permissions.GetByID(ctx, uint(id))
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no existe")
 		} else {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		}
 
 		return
 	}
 
 	if !permission.Editable {
-		domain.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser editado")
+		pkg.HTTPError(w, r, http.StatusBadRequest, "El permiso no puede ser editado")
 		return
 	}
 
 	var data dto.UpdatePermissionBody
 
 	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -200,13 +200,13 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 
 	if data.Name != permission.Name {
 		if err = utils.ValidatePermissionName(data.Name); err != nil {
-			domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+			pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		_, err = service.Permissions.GetByName(ctx, data.Name)
 		if err == nil {
-			domain.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
+			pkg.HTTPError(w, r, http.StatusBadRequest, "El nombre del permiso ya está en uso")
 			return
 		}
 	}
@@ -216,17 +216,17 @@ func (service *PermissionsService) UpdateHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err = utils.ValidatePermissionDescription(data.Description); err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = service.Permissions.Update(ctx, uint(id), &data)
 	if err != nil {
-		domain.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		pkg.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	domain.JSON(w, r, http.StatusOK, domain.Map{})
+	pkg.JSON(w, r, http.StatusOK, pkg.Map{})
 }
 
 func (service *PermissionsService) Routes() http.Handler {

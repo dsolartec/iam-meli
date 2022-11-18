@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/dsolartec/iam-meli/internal/core/domain"
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
+	"github.com/dsolartec/iam-meli/pkg"
+	"github.com/dsolartec/iam-meli/pkg/models"
 )
 
 func TestEndToEnd(t *testing.T) {
@@ -38,7 +38,7 @@ func TestEndToEnd(t *testing.T) {
 			t.Errorf("Expected %d, got: %d - %s", http.StatusOK, res.StatusCode, b)
 		}
 
-		var data domain.Map
+		var data pkg.Map
 		if err := json.Unmarshal(b, &data); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -61,7 +61,7 @@ func TestEndToEnd(t *testing.T) {
 				t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 			}
 
-			var errorMessage domain.ErrorMessage
+			var errorMessage pkg.ErrorMessage
 			if err := json.Unmarshal(b, &errorMessage); err != nil {
 				t.Fatalf("Could not unmarshall response %v", err)
 			}
@@ -96,7 +96,7 @@ func TestEndToEnd(t *testing.T) {
 			t.Errorf("Expected %d, got: %d - %s", http.StatusOK, res.StatusCode, b)
 		}
 
-		var data domain.Map
+		var data pkg.Map
 		if err := json.Unmarshal(b, &data); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -174,7 +174,7 @@ func TestEndToEnd(t *testing.T) {
 				t.Errorf("Expected /api/users/2/permissions/permission_test7, got: %s", location)
 			}
 
-			var data domain.Map
+			var data pkg.Map
 			if err := json.Unmarshal(b, &data); err != nil {
 				t.Fatalf("Could not unmarshall response %v", err)
 			}

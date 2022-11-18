@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/dsolartec/iam-meli/internal/core/domain"
-	"github.com/dsolartec/iam-meli/internal/core/domain/models"
+	"github.com/dsolartec/iam-meli/pkg"
+	"github.com/dsolartec/iam-meli/pkg/models"
 )
 
 func TestLogin_EmptyUsername(t *testing.T) {
@@ -27,7 +27,7 @@ func TestLogin_EmptyUsername(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -51,7 +51,7 @@ func TestLogin_EmptyPassword(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -78,7 +78,7 @@ func TestLogin_UserNotExists(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -110,7 +110,7 @@ func TestLogin_IncorrectPassword(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -151,7 +151,7 @@ func TestLogin_AccessToken(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
 	}
 
-	var data domain.Map
+	var data pkg.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -159,7 +159,7 @@ func TestLogin_AccessToken(t *testing.T) {
 	accessToken := data["accessToken"].(string)
 	id := data["id"].(float64)
 
-	claim, err := domain.ParseToken(accessToken, "MeLiTest")
+	claim, err := pkg.ParseToken(accessToken, "MeLiTest")
 	if err != nil {
 		t.Fatalf("Could not parse access token %v", err)
 	}
@@ -254,7 +254,7 @@ func TestSignUp_ValidationErrors(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -282,7 +282,7 @@ func TestSignUp_DuplicatedUsername(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 	}
 
-	var errorMessage domain.ErrorMessage
+	var errorMessage pkg.ErrorMessage
 	if err := json.Unmarshal(b, &errorMessage); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -321,7 +321,7 @@ func TestSignUp_AccessToken(t *testing.T) {
 		t.Errorf("Expected /api/auth/signup1, got %s", location)
 	}
 
-	var data domain.Map
+	var data pkg.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -329,7 +329,7 @@ func TestSignUp_AccessToken(t *testing.T) {
 	accessToken := data["accessToken"].(string)
 	id := data["id"].(float64)
 
-	claim, err := domain.ParseToken(accessToken, "MeLiTest")
+	claim, err := pkg.ParseToken(accessToken, "MeLiTest")
 	if err != nil {
 		t.Fatalf("Could not parse access token %v", err)
 	}

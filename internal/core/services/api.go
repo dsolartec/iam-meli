@@ -3,7 +3,7 @@ package services
 import (
 	"net/http"
 
-	"github.com/dsolartec/iam-meli/internal/core/domain/interfaces"
+	"github.com/dsolartec/iam-meli/pkg/interfaces"
 	"github.com/go-chi/chi"
 )
 

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/dsolartec/iam-meli/internal/core/domain"
+	"github.com/dsolartec/iam-meli/pkg"
 )
 
 func TestUsers_InvalidToken(t *testing.T) {
@@ -44,7 +44,7 @@ func TestUsers_InvalidToken(t *testing.T) {
 				t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 			}
 
-			var errorMessage domain.ErrorMessage
+			var errorMessage pkg.ErrorMessage
 			if err := json.Unmarshal(b, &errorMessage); err != nil {
 				t.Fatalf("Could not unmarshall response %v", err)
 			}
@@ -82,7 +82,7 @@ func TestUsers_NoAuthorized(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -126,7 +126,7 @@ func TestDeleteUser_NotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -170,7 +170,7 @@ func TestDeleteUser_NoDeletable(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -248,7 +248,7 @@ func TestGetAllUsers_Success(t *testing.T) {
 		t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
 	}
 
-	var data domain.Map
+	var data pkg.Map
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatalf("Could not unmarshall response %v", err)
 	}
@@ -333,7 +333,7 @@ func TestGetOneUser_Success(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
 		}
 
-		var data domain.Map
+		var data pkg.Map
 		if err := json.Unmarshal(b, &data); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -380,7 +380,7 @@ func TestGetAllUserPermissions_UserNotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -486,7 +486,7 @@ func TestGetAllUserPermissions_Success(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusOK, res.StatusCode)
 		}
 
-		var data domain.Map
+		var data pkg.Map
 		if err := json.Unmarshal(b, &data); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -539,7 +539,7 @@ func TestGrantUserPermission_UserNotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -582,7 +582,7 @@ func TestGrantUserPermission_CurrentUser(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -629,7 +629,7 @@ func TestGrantUserPermission_PermissionNotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -683,7 +683,7 @@ func TestGrantUserPermission_AlreadyHasPermission(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -746,7 +746,7 @@ func TestGrantUserPermission_Success(t *testing.T) {
 			t.Errorf("Expected /api/users/%s/permissions/permission_test1, got: %s", find, location)
 		}
 
-		var data domain.Map
+		var data pkg.Map
 		if err := json.Unmarshal(b, &data); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -789,7 +789,7 @@ func TestRevokeUserPermission_UserNotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -832,7 +832,7 @@ func TestRevokeUserPermission_CurrentUser(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -879,7 +879,7 @@ func TestRevokeUserPermission_PermissionNotFound(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
@@ -933,7 +933,7 @@ func TestRevokeUserPermission_NoHasPermission(t *testing.T) {
 			t.Errorf("Expected %d, got: %d", http.StatusBadRequest, res.StatusCode)
 		}
 
-		var errorMessage domain.ErrorMessage
+		var errorMessage pkg.ErrorMessage
 		if err := json.Unmarshal(b, &errorMessage); err != nil {
 			t.Fatalf("Could not unmarshall response %v", err)
 		}
